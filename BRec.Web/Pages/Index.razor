@@ -1,0 +1,24 @@
+﻿@page "/"
+@inject IJSRuntime JS
+
+<h1>Hello, world!</h1>
+
+<button @onclick=Record>Record</button>
+<button @onclick=Stop>Stop</button>
+
+<ul id="playlist"></ul>
+
+@code {
+
+    string param = "my-new-file-name";
+
+    async Task Record()
+    {
+        await JS.InvokeVoidAsync("MyRecorder.start");
+    }
+
+    async Task Stop()
+    {
+        await JS.InvokeVoidAsync("MyRecorder.stop", param);
+    }
+}
