@@ -1,24 +1,58 @@
 ﻿@page "/"
 @inject IJSRuntime JS
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h6">Укажите имя файла (кабинет_предмет_тема) и нажмите кнопку "начать запись"</MudText>
+<MudText Typo="Typo.body2">По окончании записи нажмите кнопку "стоп"</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">Пример названия файла: К201_русяз_собесед</MudText>
 
-<button @onclick=Record>Record</button>
-<button @onclick=Stop>Stop</button>
+<EditForm EditContext="@editContext">
+    <DataAnnotationsValidator />
+    <MudCard>
+        <MudCardContent>
+            <MudTextField Label="Имя файла" @bind-Value="fileName.Description" For="@(() => fileName.Description)" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Mic" @onclick="Record" Disabled="@formInvalid" Class="mr-2">@recordButton</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="Stop">Стоп</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
 
-<ul id="playlist"></ul>
+<MudList id="playlist"></MudList>
 
 @code {
 
-    string param = "my-new-file-name";
+    string recordButton = "Начать запись";
+    private bool formInvalid = true;
+    private EditContext editContext;
+    FileName fileName = new FileName();
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(fileName);
+        editContext.OnFieldChanged += HandleFieldChanged;
+    }
+
+    private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        formInvalid = !editContext.Validate();
+        StateHasChanged();
+    }
 
     async Task Record()
     {
         await JS.InvokeVoidAsync("MyRecorder.start");
+        recordButton = "Идет запись...";
+        formInvalid = true;
     }
 
     async Task Stop()
     {
+        formInvalid = !editContext.Validate();
+        var timeStamp = DateTime.Now.ToString("ddMMyyyy-HHmmss");
+        var param = fileName.Description + "_" + timeStamp;
+
         await JS.InvokeVoidAsync("MyRecorder.stop", param);
+        recordButton = "Начать запись";
     }
 }
